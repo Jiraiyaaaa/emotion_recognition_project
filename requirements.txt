@@ -24,6 +24,10 @@ python-multipart==0.0.6
 # Utilities
 Pillow==10.4.0
 
+# TensorFlow (DeepFace/RetinaFace backend)
+tensorflow==2.16.1
+tf-keras
+
 # PyTorch (optional, only if using LSTM/future torch models)
 torch==2.4.1
 
