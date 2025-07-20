@@ -1,0 +1,31 @@
+# Core ML and Vision
+opencv-python==4.8.1.78
+numpy==1.24.4
+mediapipe
+deepface
+
+# Audio Processing (optional but recommended)
+opensmile==2.5.0
+librosa==0.10.2
+sounddevice==0.5.0
+vosk
+vaderSentiment
+
+# AI Integration
+google-generativeai==0.3.2
+
+# PyTorch (optional, for future LSTM features)
+torch==2.4.1
+
+# System Monitoring
+psutil==5.9.6
+
+# Web Interface (install only if you want web mode)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+python-multipart==0.0.6
+
+# Utilities
+python-dotenv==1.0.1
+Pillow==10.4.0
