@@ -5,11 +5,17 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y build-essential ffmpeg libsm6 libxext6 git portaudio19-dev && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    for i in 1 2 3; do \
+        apt-get update && \
+        apt-get install -y --fix-missing build-essential ffmpeg libsm6 libxext6 git portaudio19-dev && \
+        rm -rf /var/lib/apt/lists/* && break || sleep 10; \
+    done
 
 # Copy requirements and install
 COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir --timeout 180 --retries 10 -r requirements.txt
 
 # Copy project files
 COPY . .
