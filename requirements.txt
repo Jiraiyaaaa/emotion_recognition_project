@@ -24,14 +24,14 @@ python-multipart==0.0.6
 # Utilities
 Pillow==10.4.0
 
-# PyTorch (optional, only if using LSTM/future torch models)
-# torch==2.4.1
+PyTorch (optional, only if using LSTM/future torch models)
+torch==2.4.1
 
 # System Monitoring (optional)
-# psutil==5.9.6
+psutil==5.9.6
 
 # .env support (optional)
-# python-dotenv==1.0.1
+python-dotenv==1.0.1
 
 # If you use librosa for audio features, uncomment below:
-# librosa==0.10.2
+librosa==0.10.2
