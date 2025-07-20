@@ -24,7 +24,7 @@ python-multipart==0.0.6
 # Utilities
 Pillow==10.4.0
 
-PyTorch (optional, only if using LSTM/future torch models)
+# PyTorch (optional, only if using LSTM/future torch models)
 torch==2.4.1
 
 # System Monitoring (optional)
