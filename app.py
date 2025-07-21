@@ -235,19 +235,18 @@ class OptimizedCALMEDAutismCNN:
                 enforce_detection=False
             )
             
+            dominant_emotion = max(analysis[0]['emotion'], key=analysis[0]['emotion'].get)
+            autism_emotion = self.emotion_map.get(dominant_emotion, 'neutral')
+            confidence = analysis[0]['emotion'][dominant_emotion] / 100.0
+            
             processing_time = time.time() - start_time
             
-            if analysis:
-                dominant_emotion = analysis[0]['dominant_emotion']
-                autism_emotion = self.emotion_map.get(dominant_emotion, 'focused').capitalize()
-                confidence = analysis[0]['emotion'][dominant_emotion] / 100.0
-                
-                return {
-                    'emotion': autism_emotion,
-                    'confidence': confidence,
-                    'scores': analysis[0]['emotion'],
-                    'processing_time': processing_time
-                }
+            return {
+                'emotion': autism_emotion,
+                'confidence': confidence,
+                'scores': analysis[0]['emotion'],
+                'processing_time': processing_time
+            }
         except Exception as e:
             logger.warning(f"Emotion analysis failed: {e}")
             
@@ -260,100 +259,7 @@ class OptimizedCALMEDAutismCNN:
 
 
 
-    """Improved audio processing with overlapping windows"""
-    def __init__(self, state):
-        self.state = state
-        self.audio_queue = queue.Queue()
-        self.audio_buffer = deque(maxlen=48000)  # 3 seconds at 16kHz
-        self.last_prosody_time = time.time()
-        self.prosody_interval = 0.5  # Process every 500ms
-        
-        if AUDIO_AVAILABLE:
-            self.smile = opensmile.Smile(
-                feature_set=opensmile.FeatureSet.eGeMAPS, 
-                feature_level=opensmile.FeatureLevel.Functionals
-            )
-        
-    def extract_enhanced_prosody(self, audio_chunk):
-        """Enhanced prosody analysis with multiple features"""
-        if not AUDIO_AVAILABLE:
-            return
-            
-        try:
-            if len(audio_chunk) < 8000:  # Minimum chunk size
-                return
-                
-            features = self.smile.process_signal(audio_chunk, 16000)
-            
-            f0_std = features['F0semitoneFrom27.5Hz_sma3nz_stddevNorm'].values[0]
-            loudness_std = features['loudness_sma3_stddevNorm'].values[0]
-            jitter = features['jitterLocal_sma3nz_amean'].values[0]
-            
-            # Calculate autism-specific metrics
-            monotony_score = max(0.0, min(1.0, 1.0 - (f0_std + loudness_std) / 2.0))
-            voice_stress = min(jitter * 10, 1.0)
-            
-            # Update state with multiple metrics
-            self.state.update({
-                'monotony_score': monotony_score,
-                'voice_stress': voice_stress,
-                'f0_variability': f0_std,
-                'loudness_variability': loudness_std,
-                'last_audio_update': time.time()
-            })
-            
-        except Exception as e:
-            logger.warning(f"Prosody extraction failed: {e}")
-            self.state.update({'monotony_score': 0.0, 'voice_stress': 0.0})
-    
-    def process_audio_stream(self):
-        """Enhanced audio stream processing"""
-        if not AUDIO_AVAILABLE:
-            return
-            
-        def audio_callback(indata, frames, time, status):
-            if status:
-                logger.warning(f"Audio stream warning: {status}")
-            self.audio_queue.put(indata.copy())
-            
-        try:
-            with sd.InputStream(samplerate=16000, channels=1, dtype='float32', callback=audio_callback):
-                while True:
-                    audio_chunk = self.audio_queue.get()
-                    
-                    # Add to buffer for overlapping window analysis
-                    self.audio_buffer.extend(audio_chunk.flatten())
-                    
-                    # Process speech recognition
-                    if SPEECH_AVAILABLE:
-                        audio_int16 = (audio_chunk * 32767).astype(np.int16)
-                        if recognizer.AcceptWaveform(audio_int16.tobytes()):
-                            result = json.loads(recognizer.Result())
-                            if result.get('text'):
-                                self.state['transcribed_text'] = result['text']
-                                score = sentiment_analyzer.polarity_scores(self.state['transcribed_text'])
-                                if score['compound'] >= 0.05:
-                                    self.state['text_sentiment'] = "Positive"
-                                elif score['compound'] <= -0.05:
-                                    self.state['text_sentiment'] = "Negative"
-                                else:
-                                    self.state['text_sentiment'] = "Neutral"
-                    
-                    # Process prosody with timing control
-                    current_time = time.time()
-                    if (current_time - self.last_prosody_time > self.prosody_interval and 
-                        len(self.audio_buffer) >= 8000):
-                        
-                        prosody_chunk = np.array(list(self.audio_buffer))
-                        if np.linalg.norm(prosody_chunk) > 0.01:
-                            self.extract_enhanced_prosody(prosody_chunk)
-                        else:
-                            self.state.update({'monotony_score': 0.0, 'voice_stress': 0.0})
-                        
-                        self.last_prosody_time = current_time
-                        
-        except Exception as e:
-            logger.error(f"Audio processing error: {e}")
+
 
 
 class AdvancedPersonalizationEngine:
@@ -579,8 +485,8 @@ Session Summary ({session_duration/60:.1f} minutes):
         
         cv2.putText(frame, display_value, (base_x + 200, y_pos), self.font, 0.8, color, 2)
     
-    def draw_multimodal_analysis(self, frame, emotion_data, audio_data, y_pos):
-        """Draw comprehensive multimodal analysis"""
+    def draw_multimodal_analysis(self, frame, emotion_data, y_pos):
+        """Draw comprehensive multimodal analysis (vision only, web version)"""
         w = frame.shape[1]
         base_x = w - self.panel_width + 20
         
@@ -594,20 +500,6 @@ Session Summary ({session_duration/60:.1f} minutes):
             confidence = emotion_data.get('confidence', 0.0)
             cv2.putText(frame, f"Emotion: {emotion} ({confidence:.0%})", 
                        (base_x, current_y), self.font, 0.7, self.colors["highlight"], 1)
-            current_y += 25
-        
-        # Audio metrics
-        if audio_data:
-            monotony = audio_data.get('monotony_score', 0.0)
-            stress = audio_data.get('voice_stress', 0.0)
-            
-            monotony_color = self.colors["error"] if monotony > 0.7 else self.colors["warn"] if monotony > 0.4 else self.colors["ok"]
-            cv2.putText(frame, f"Monotony: {monotony:.2f}", 
-                       (base_x, current_y), self.font, 0.7, monotony_color, 1)
-            
-            stress_color = self.colors["error"] if stress > 0.7 else self.colors["warn"] if stress > 0.4 else self.colors["ok"]
-            cv2.putText(frame, f"Voice Stress: {stress:.2f}", 
-                       (base_x + 150, current_y), self.font, 0.7, stress_color, 1)
             current_y += 25
     
     def draw_ai_coach_section(self, frame, interpretation, suggestions, sarcasm_alert):
@@ -1662,21 +1554,6 @@ if WEB_AVAILABLE:
                 </div>
             </div>
 
-            <!-- Audio Analysis -->
-            <div class="audio-section">
-                <div class="section-title">Audio Analysis</div>
-                <div class="audio-metrics">
-                    <div class="audio-metric">
-                        <div class="metric-label">Speech Monotony</div>
-                        <div class="metric-value" id="monotonyScore">--</div>
-                    </div>
-                    <div class="audio-metric">
-                        <div class="metric-label">Voice Stress</div>
-                        <div class="metric-value" id="voiceStress">--</div>
-                    </div>
-                </div>
-            </div>
-
             <!-- AI Coaching -->
             <div class="ai-section">
                 <div class="ai-header">
@@ -1703,6 +1580,9 @@ if WEB_AVAILABLE:
                 this.initializeElements();
                 this.setupEventListeners();
                 this.connectWebSocket();
+                // Remove audio metric elements
+                if (document.getElementById('monotonyScore')) document.getElementById('monotonyScore').remove();
+                if (document.getElementById('voiceStress')) document.getElementById('voiceStress').remove();
             }
 
             initializeElements() {
@@ -1718,8 +1598,7 @@ if WEB_AVAILABLE:
                     emotionBreakdown: document.getElementById('emotionBreakdown'),
                     fpsDisplay: document.getElementById('fpsDisplay'),
                     latencyDisplay: document.getElementById('latencyDisplay'),
-                    monotonyScore: document.getElementById('monotonyScore'),
-                    voiceStress: document.getElementById('voiceStress'),
+                    
                     aiContent: document.getElementById('aiContent'),
                     systemStatus: document.getElementById('systemStatus'),
                     statusText: document.getElementById('statusText')
@@ -1895,11 +1774,7 @@ if WEB_AVAILABLE:
                         emotionData.processing_time_ms ? `${emotionData.processing_time_ms.toFixed(0)} ms` : '-- ms';
                 }
                 
-                // Update audio metrics
-                this.elements.monotonyScore.textContent = 
-                    emotionData.monotony_score ? emotionData.monotony_score.toFixed(2) : '--';
-                this.elements.voiceStress.textContent = 
-                    emotionData.voice_stress ? emotionData.voice_stress.toFixed(2) : '--';
+                
                 
                 // Update AI interpretation if available
                 if (emotionData.ai_interpretation) {
@@ -2089,6 +1964,3 @@ else:
         else:
             print("Web mode not available. Please install FastAPI and dependencies:")
             print("pip install fastapi uvicorn websockets python-multipart")
-
-
-
