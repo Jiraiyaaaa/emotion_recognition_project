@@ -4,14 +4,6 @@ numpy==1.24.4
 mediapipe
 deepface
 
-# Audio Processing (desktop & web audio analysis)
-
-
-
-# Text & Speech Analysis (optional, keep if used)
-
-
-
 # AI Integration (Gemini/Google)
 google-generativeai==0.3.2
 

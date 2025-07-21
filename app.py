@@ -34,9 +34,7 @@ try:
 except ImportError:
     WEB_AVAILABLE = False
     print("FastAPI not available. Web interface disabled.")
-
-# Audio processing imports
-
+    exit(1)
 
 # DeepFace import
 try:
@@ -1892,8 +1890,7 @@ if WEB_AVAILABLE:
                 this.elements.confidenceLevel.textContent = '0% confidence';
                 this.elements.fpsDisplay.textContent = '--';
                 this.elements.latencyDisplay.textContent = '-- ms';
-                this.elements.monotonyScore.textContent = '--';
-                this.elements.voiceStress.textContent = '--';
+
                 this.elements.emotionBreakdown.innerHTML = '';
                 this.elements.aiContent.textContent = 'System stopped. Start camera to begin analysis.';
             }
@@ -1911,6 +1908,16 @@ if WEB_AVAILABLE:
 
 else:
     # Fallback if FastAPI is not available
+    def run_web_server():
+        print("FastAPI not available. Please install with: pip install fastapi uvicorn websockets")
+        return
+
+# Health check endpoint for deployment platforms
+if WEB_AVAILABLE:
+    @app.get("/healthz")
+    async def health_check():
+        return {"status": "ok"}
+
     def run_web_server():
         print("FastAPI not available. Please install with: pip install fastapi uvicorn websockets")
         return
