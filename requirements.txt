@@ -1,33 +1,16 @@
 # Core ML and Vision
-opencv-python==4.8.1.78
-numpy==1.24.4
+# Minimal, deployment-compatible requirements for vision-only emotion recognition
+fastapi
+uvicorn[standard]
+websockets
+python-multipart
+Pillow
+psutil
+python-dotenv
+opencv-python
+numpy
 mediapipe
 deepface
-
-# AI Integration (Gemini/Google)
-google-generativeai==0.3.2
-
-# Web Interface (FastAPI, websockets)
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-websockets==12.0
-python-multipart==0.0.6
-
-# Utilities
-Pillow==10.4.0
-
-# TensorFlow (DeepFace/RetinaFace backend)
-tensorflow==2.16.1
-tf-keras
-
-# PyTorch (optional, only if using LSTM/future torch models)
-torch==2.4.1
-
-# System Monitoring (optional)
-psutil==5.9.6
-
-# .env support (optional)
-python-dotenv==1.0.1
-
-# If you use librosa for audio features, uncomment below:
+tensorflow
+google-generativeai
 
