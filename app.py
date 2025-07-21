@@ -927,7 +927,7 @@ if WEB_AVAILABLE:
                         'emotion_confidence': 0.0,
                         'session_start': time.time(),
                         'last_ai_update': 0
-                    }
+                    }  # No monotony_score or voice_stress
                 }
                 # Send initial status to client
                 await websocket.send_json({
@@ -986,17 +986,26 @@ if WEB_AVAILABLE:
                             frame_bytes = base64.b64decode(frame_data.split(',')[1])
                             nparr = np.frombuffer(frame_bytes, np.uint8)
                             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                            
+                            if frame is None:
+                                raise ValueError('Frame decode failed')
                             # Process emotion recognition
                             result = await process_emotion_frame(frame, manager.system_components)
-                            
-                            # Send results back to client
-                            await manager.send_personal_message({
-                                'type': 'emotion_result',
-                                'data': result
-                            }, websocket)
                         except Exception as e:
                             logger.error(f"Frame processing error: {e}")
+                            result = {
+                                'emotion': 'Error',
+                                'confidence': 0.0,
+                                'emotion_scores': {},
+                                'processing_time_ms': 0,
+                                'performance': {'status': 'ERROR'},
+                                'ai_interpretation': '',
+                                'timestamp': datetime.now().strftime("%H:%M:%S")
+                            }
+                        # Always send a result payload
+                        await manager.send_personal_message({
+                            'type': 'emotion_result',
+                            'data': result
+                        }, websocket)
                 
                 elif data.get('type') == 'request_help':
                     # Handle help request through Gemini API
@@ -1043,7 +1052,7 @@ if WEB_AVAILABLE:
             if current_time - components['state']['last_ai_update'] > 10:
                 ai_content = components['gemini_processor'].get_emotion_interpretation(
                     final_emotion, 
-                    components['state']['monotony_score']
+                    context="web-only"
                 )
                 if ai_content:
                     components['state']['last_ai_update'] = current_time
@@ -1055,8 +1064,6 @@ if WEB_AVAILABLE:
                 'processing_time_ms': processing_time * 1000,
                 'performance': performance_metrics,
                 'ai_interpretation': ai_content,
-                'monotony_score': components['state']['monotony_score'],
-                'voice_stress': components['state']['voice_stress'],
                 'timestamp': datetime.now().strftime("%H:%M:%S")
             }
             
@@ -1069,8 +1076,6 @@ if WEB_AVAILABLE:
                 'processing_time_ms': 0,
                 'performance': {'status': 'ERROR'},
                 'ai_interpretation': '',
-                'monotony_score': 0.0,
-                'voice_stress': 0.0,
                 'timestamp': datetime.now().strftime("%H:%M:%S")
             }
 
