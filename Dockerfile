@@ -8,7 +8,7 @@ WORKDIR /app
 RUN set -eux; \
     for i in 1 2 3; do \
         apt-get update && \
-        apt-get install -y --fix-missing build-essential ffmpeg libsm6 libxext6 git portaudio19-dev && \
+        apt-get install -y --no-install-recommends ffmpeg libsm6 libxext6 git && \
         rm -rf /var/lib/apt/lists/* && break || sleep 10; \
     done
 
@@ -24,4 +24,5 @@ COPY . .
 EXPOSE 5000
 
 # Command to run the app
+ENV PORT=5000
 CMD uvicorn app:app --host 0.0.0.0 --port $PORT

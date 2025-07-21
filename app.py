@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import threading
 import queue
 import json
-import sounddevice as sd
+
 from functools import lru_cache
 import torch
 import torch.nn as nn
@@ -36,14 +36,7 @@ except ImportError:
     print("FastAPI not available. Web interface disabled.")
 
 # Audio processing imports
-try:
-    import opensmile
-    from vosk import Model, KaldiRecognizer
-    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-    AUDIO_AVAILABLE = True
-except ImportError:
-    AUDIO_AVAILABLE = False
-    print("Audio processing libraries not available.")
+
 
 # DeepFace import
 try:
@@ -79,19 +72,7 @@ except (KeyError, TypeError):
     GEMINI_AVAILABLE = False
     print("Warning: GEMINI_API_KEY not found. AI coach features will be disabled.")
 
-# Configure speech recognition
-if AUDIO_AVAILABLE:
-    try:
-        vosk_model = Model("vosk-model-small-en-in-0.4")
-        recognizer = KaldiRecognizer(vosk_model, 16000)
-        sentiment_analyzer = SentimentIntensityAnalyzer()
-        SPEECH_AVAILABLE = True
-        print("Speech recognition models loaded successfully.")
-    except Exception as e:
-        SPEECH_AVAILABLE = False
-        print(f"Warning: Could not load speech models. Error: {e}")
-else:
-    SPEECH_AVAILABLE = False
+
 
 # ================================================================================================
 # CORE CLASSES - All autism-specific emotion recognition components
@@ -278,7 +259,7 @@ class OptimizedCALMEDAutismCNN:
         }
 
 
-class EnhancedAutismAudioProcessor:
+
     """Improved audio processing with overlapping windows"""
     def __init__(self, state):
         self.state = state
@@ -514,7 +495,7 @@ Session Summary ({session_duration/60:.1f} minutes):
 # DESKTOP APPLICATION - OpenCV-based interface
 # ================================================================================================
 
-class EnhancedUIManager:
+
     """Improved UI with performance metrics and better layout"""
     def __init__(self, panel_width=500):
         self.panel_width = panel_width
@@ -685,7 +666,7 @@ class EnhancedUIManager:
             cv2.putText(frame, line, (x, y + i * 25), self.font, 0.7, self.colors["text"], 1)
 
 
-class OptimizedAutismEmotionSystem:
+
     """Complete optimized autism emotion recognition system - Desktop Version"""
     def __init__(self):
         # Core components
@@ -2051,7 +2032,7 @@ else:
 # MAIN APPLICATION ENTRY POINT
 # ================================================================================================
 
-def main():
+
     """Main entry point with argument parsing"""
     parser = argparse.ArgumentParser(description='Autism Support System - Complete Emotion Recognition Platform')
     parser.add_argument('--mode', choices=['desktop', 'web'], default='desktop',
@@ -2110,5 +2091,4 @@ def main():
             print("pip install fastapi uvicorn websockets python-multipart")
 
 
-if __name__ == '__main__':
-    main()
+
