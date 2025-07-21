@@ -12,8 +12,6 @@ import queue
 import json
 
 from functools import lru_cache
-import torch
-import torch.nn as nn
 import asyncio
 import logging
 from datetime import datetime

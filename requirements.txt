@@ -13,6 +13,5 @@ mediapipe
 deepface
 tensorflow
 google-generativeai
-torch
 tf-keras
 
