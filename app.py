@@ -566,7 +566,6 @@ Session Summary ({session_duration/60:.1f} minutes):
         self.personalization = AdvancedPersonalizationEngine()
         self.gemini_processor = GeminiLiveProcessor()
         self.performance_monitor = PerformanceMonitor()
-        self.session_analyzer = SessionAnalyzer()
         
         # MediaPipe setup
         self.mp_face_mesh = mp.solutions.face_mesh
@@ -926,14 +925,23 @@ if WEB_AVAILABLE:
                     'state': {
                         'current_emotion': 'Unknown',
                         'emotion_confidence': 0.0,
-                        'monotony_score': 0.0,
-                        'voice_stress': 0.0,
-                        'transcribed_text': '',
-                        'text_sentiment': 'Neutral',
                         'session_start': time.time(),
                         'last_ai_update': 0
                     }
                 }
+                # Send initial status to client
+                await websocket.send_json({
+                    'type': 'emotion_result',
+                    'data': {
+                        'emotion': 'Initializing',
+                        'confidence': 0.0,
+                        'emotion_scores': {},
+                        'processing_time_ms': 0,
+                        'performance': {'status': 'READY'},
+                        'ai_interpretation': '',
+                        'timestamp': ''
+                    }
+                })
         
         def disconnect(self, websocket: WebSocket):
             if websocket in self.active_connections:
